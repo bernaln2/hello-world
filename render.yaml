@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: class-election
+    runtime: python
+    buildCommand: echo "No build needed"
+    startCommand: python3 app.py
+    envVars:
+      - key: PORT
+        value: 10000
