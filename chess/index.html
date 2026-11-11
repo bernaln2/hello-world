@@ -101,7 +101,7 @@ h1 span { color: var(--accent); }
 .side { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
 .label { font-size: 0.74rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0; }
-.levels { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.levels { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
 .lvl { border: 2px solid var(--line); background: var(--surface); color: var(--fg); border-radius: 10px; padding: 8px 4px; cursor: pointer; font: inherit; display: flex; flex-direction: column; align-items: center; gap: 1px; }
 .lvl .g { font-size: 1.5rem; line-height: 1.1; }
 .lvl .n { font-family: var(--font-display); font-weight: 600; font-size: 0.98rem; }
@@ -167,8 +167,9 @@ h1 span { color: var(--accent); }
         <p class="label" id="lvlLabel">Level</p>
         <div class="levels" id="levels">
           <button class="lvl" id="lvl1" data-level="1" aria-pressed="true"><span class="g tb">&#x265F;&#xFE0E;</span><span class="n">Pawn</span><span class="s">Beginner</span></button>
-          <button class="lvl" id="lvl2" data-level="2" aria-pressed="false"><span class="g tb">&#x265E;&#xFE0E;</span><span class="n">Knight</span><span class="s">Intermediate</span></button>
-          <button class="lvl" id="lvl3" data-level="3" aria-pressed="false"><span class="g tb">&#x265B;&#xFE0E;</span><span class="n">Queen</span><span class="s">Advanced</span></button>
+          <button class="lvl" id="lvl2" data-level="2" aria-pressed="false"><span class="g tb">&#x265D;&#xFE0E;</span><span class="n">Bishop</span><span class="s">Easy</span></button>
+          <button class="lvl" id="lvl3" data-level="3" aria-pressed="false"><span class="g tb">&#x265E;&#xFE0E;</span><span class="n">Knight</span><span class="s">Intermediate</span></button>
+          <button class="lvl" id="lvl4" data-level="4" aria-pressed="false"><span class="g tb">&#x265B;&#xFE0E;</span><span class="n">Queen</span><span class="s">Advanced</span></button>
         </div>
       </section>
 
@@ -409,8 +410,9 @@ h1 span { color: var(--accent); }
 
   const LEVELS = {
     1: (s) => { const ms = legalMoves(s); if (Math.random() < 0.4) return ms[Math.floor(Math.random() * ms.length)]; return search(s, 1, false, 80).move; },
-    2: (s) => search(s, 2, true, 25).move,
-    3: (s) => search(s, 3, true, 0).move
+    2: (s) => { const ms = legalMoves(s); if (Math.random() < 0.15) return ms[Math.floor(Math.random() * ms.length)]; return search(s, 1, true, 50).move; },
+    3: (s) => search(s, 2, true, 25).move,
+    4: (s) => search(s, 3, true, 0).move
   };
 
   // ---------- Game state ----------
@@ -418,7 +420,7 @@ h1 span { color: var(--accent); }
   const $ = (id) => document.getElementById(id);
   const boardEl = $("board");
   try { level = Number(localStorage.getItem("lg-level")) || 1; } catch (e) { level = 1; }
-  if (![1, 2, 3].includes(level)) level = 1;
+  if (![1, 2, 3, 4].includes(level)) level = 1;
 
   function newGame() {
     gameId++;
