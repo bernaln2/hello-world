@@ -121,7 +121,10 @@ h1 span { color: var(--accent); }
 .coach.good { background: var(--good-bg); color: var(--good-fg); }
 .status { font-size: 0.8rem; color: var(--muted); }
 
-.btns { display: flex; gap: 6px; }
+.btns { display: flex; flex-wrap: wrap; gap: 6px; }
+.btn[aria-pressed="true"] { background: var(--good-bg); color: var(--good-fg); box-shadow: inset 0 0 0 2px var(--accent); }
+.tray-lost { order: 1; } .board { order: 2; } .tray-took { order: 3; }
+.board-col.flipped .tray-lost { order: 3; } .board-col.flipped .tray-took { order: 1; }
 .btn { flex: 1 1 0; border: 0; border-radius: 8px; padding: 8px 6px; font: inherit; font-weight: 800; cursor: pointer; background: var(--surface-2); color: var(--fg); white-space: nowrap; }
 .btn.primary { background: var(--accent); color: var(--accent-fg); }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -151,12 +154,12 @@ h1 span { color: var(--accent); }
         </div>
         <span class="cpu" id="pCpu">Computer 50%</span>
       </div>
-      <div class="tray-row" aria-label="Your pieces the computer has taken">
+      <div class="tray-row tray-lost" aria-label="Your pieces the computer has taken">
         <span class="who">You lost</span>
         <div class="tray" id="trayLost"></div>
       </div>
       <div class="board" id="board" role="grid" aria-label="Chess board"></div>
-      <div class="tray-row" aria-label="Computer pieces you have taken">
+      <div class="tray-row tray-took" aria-label="Computer pieces you have taken">
         <span class="who">You took</span>
         <div class="tray" id="trayTook"></div>
       </div>
@@ -169,6 +172,7 @@ h1 span { color: var(--accent); }
       <div class="btns">
         <button class="btn primary" id="hintBtn">Hint</button>
         <button class="btn" id="undoBtn">Undo</button>
+        <button class="btn" id="rotateBtn" aria-pressed="false" title="Flip the board to see it from the computer's side">Rotate</button>
         <button class="btn" id="newBtn">New game</button>
       </div>
       <div class="status" id="status">Your turn</div>
@@ -403,7 +407,7 @@ h1 span { color: var(--accent); }
   };
 
   // ---------- Game state ----------
-  let state, history, took, lost, last, selected, targets, level, thinking, over, gameId = 0, hint = null;
+  let flipped = false, state, history, took, lost, last, selected, targets, level, thinking, over, gameId = 0, hint = null;
   const $ = (id) => document.getElementById(id);
   const boardEl = $("board");
   try { level = Number(localStorage.getItem("lg-level")) || 1; } catch (e) { level = 1; }
@@ -443,8 +447,10 @@ h1 span { color: var(--accent); }
     boardEl.innerHTML = "";
     const showMoves = $("optMoves").checked;
     const checkSq = inCheck(state) ? kingSq(state.b, state.turn) : -1;
-    for (let i = 0; i < 64; i++) {
+    for (let pos = 0; pos < 64; pos++) {
+      const i = flipped ? 63 - pos : pos;
       const r = i >> 3, c = i & 7, p = state.b[i];
+      const vr = pos >> 3, vc = pos & 7;
       const sq = document.createElement("button");
       sq.className = "sq " + ((r + c) % 2 ? "d" : "l");
       if (last && (i === last.from || i === last.to)) sq.classList.add("last");
@@ -452,8 +458,8 @@ h1 span { color: var(--accent); }
       if (hint && (i === hint.from || i === hint.to)) sq.classList.add("hint");
       if (i === checkSq) sq.classList.add("check");
       sq.setAttribute("aria-label", sqName(i) + (p ? " " + (p[0] === "w" ? "white " : "black ") + NAME[p[1]] : ""));
-      if (c === 0) { const k = document.createElement("span"); k.className = "coord rk"; k.textContent = 8 - r; sq.appendChild(k); }
-      if (r === 7) { const k = document.createElement("span"); k.className = "coord fl"; k.textContent = "abcdefgh"[c]; sq.appendChild(k); }
+      if (vc === 0) { const k = document.createElement("span"); k.className = "coord rk"; k.textContent = 8 - r; sq.appendChild(k); }
+      if (vr === 7) { const k = document.createElement("span"); k.className = "coord fl"; k.textContent = "abcdefgh"[c]; sq.appendChild(k); }
       if (p) { const g = document.createElement("span"); g.className = "pc " + (p[0] === "w" ? "pw" : "pb"); g.textContent = GLYPH[p[1]] + "︎"; sq.appendChild(g); }
       if (showMoves && targets.some((m) => m.to === i)) {
         const d = document.createElement("span"); d.className = p || targets.find((m) => m.to === i).ep ? "ring" : "dot"; sq.appendChild(d);
@@ -582,6 +588,13 @@ h1 span { color: var(--accent); }
     render();
   });
   $("newBtn").addEventListener("click", newGame);
+  $("rotateBtn").addEventListener("click", () => {
+    flipped = !flipped;
+    $("rotateBtn").setAttribute("aria-pressed", String(flipped));
+    document.querySelector(".board-col").classList.toggle("flipped", flipped);
+    coach(flipped ? "Now you're seeing the board from the computer's side. What is it planning? Tap Rotate again to flip back." : "Back to your side of the board.");
+    render();
+  });
   $("undoBtn").addEventListener("click", () => {
     if (!history.length || thinking) return;
     let h = history.pop();
